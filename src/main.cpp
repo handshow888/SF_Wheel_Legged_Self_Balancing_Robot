@@ -76,6 +76,7 @@ void IMUTask(void *pvParameters)
   while (true)
   {
     INS_Task();
+    Serial.printf("Roll:%.3f\tPitch:%3f\tYaw:%.3f\n", INS.Roll, INS.Pitch, INS.Yaw);
   }
   
 }

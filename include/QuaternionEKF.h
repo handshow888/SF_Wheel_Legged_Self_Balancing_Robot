@@ -34,9 +34,8 @@ typedef struct
     float Q2; // 陀螺仪零偏过程噪声
     float R;  // 加速度计量测噪声
 
-    float dt; // 姿态更新周期
-    Matrix<1, 1> ChiSquare;
-    float ChiSquare_Data[1];      // 卡方检验检测函数
+    float dt;                     // 姿态更新周期
+    Matrix<1, 1> ChiSquare;       // 卡方检验检测函数
     float ChiSquareTestThreshold; // 卡方检验阈值
     float lambda;                 // 渐消因子
 

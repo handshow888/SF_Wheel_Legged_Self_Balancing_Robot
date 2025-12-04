@@ -9,9 +9,9 @@ const float xb[3] = {1, 0, 0};
 const float yb[3] = {0, 1, 0};
 const float zb[3] = {0, 0, 1};
 
-static constexpr int X =0;
-static constexpr int Y =1;
-static constexpr int Z =2;
+static constexpr int X = 0;
+static constexpr int Y = 1;
+static constexpr int Z = 2;
 
 void INS_Init(void)
 {
@@ -23,22 +23,25 @@ void INS_Task(void)
 {
     const float gravity[3] = {0, 0, 9.81f};
 
-    auto currentTime = millis();
+    auto currentTime = micros();
     if (lastTime != 0) // 非首次运行
-        dt = (currentTime - lastTime) / 1000.0f;
+        dt = (currentTime - lastTime) * 1.0e-6f;
     else // 防止首次启动dt计算值出错
+    {
+        lastTime = currentTime;
         return;
+    }
     lastTime = currentTime;
 
     // ins update
     mpu6050.update();
 
-    INS.Accel[X] = mpu6050.getAccX();
-    INS.Accel[Y] = mpu6050.getAccY();
-    INS.Accel[Z] = mpu6050.getAccZ();
-    INS.Gyro[X] = mpu6050.getGyroX();
-    INS.Gyro[Y] = mpu6050.getGyroY();
-    INS.Gyro[Z] = mpu6050.getGyroZ();
+    INS.Accel[X] = mpu6050.getAccX() * 9.81f;
+    INS.Accel[Y] = mpu6050.getAccY() * 9.81f;
+    INS.Accel[Z] = mpu6050.getAccZ() * 9.81f;
+    INS.Gyro[X] = mpu6050.getGyroX() * deg2rad;
+    INS.Gyro[Y] = mpu6050.getGyroY() * deg2rad;
+    INS.Gyro[Z] = mpu6050.getGyroZ() * deg2rad;
 
     // 核心函数,EKF更新四元数
     IMU_QuaternionEKF_Update(INS.Gyro[X], INS.Gyro[Y], INS.Gyro[Z], INS.Accel[X], INS.Accel[Y], INS.Accel[Z], dt);
