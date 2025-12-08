@@ -377,7 +377,7 @@ static void IMU_QuaternionEKF_xhatUpdate(KalmanFilter_t *kf)
     auto temp_matrix = kf->H * kf->Pminus;    // temp_matrix = H·P'(k)
     auto temp_matrix1 = temp_matrix * kf->HT; // temp_matrix1 = H·P'(k)·HT
     kf->S = temp_matrix1 + kf->R;             // S = H P'(k) HT + R
-    temp_matrix1 = Invert(kf->S);             // temp_matrix1 = inv(H·P'(k)·HT + R)
+    temp_matrix1 = Inverse(kf->S);             // temp_matrix1 = inv(H·P'(k)·HT + R)
 
     q0 = kf->xhatminus(0, 0);
     q1 = kf->xhatminus(1, 0);
