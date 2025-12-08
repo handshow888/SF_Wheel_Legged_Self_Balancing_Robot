@@ -78,14 +78,6 @@ void IMUTask(void *pvParameters)
   while (true)
   {
     INS_Task();
-    // Serial.printf("Acc:%.2f\t%.2f\t%.2f\tGyro:%.2f\t%.2f\t%.2f\n",
-    //                 mpu6050.getAccX(),
-    //                 mpu6050.getAccY(),
-    //                 mpu6050.getAccZ(),
-    //                 mpu6050.getGyroX(),
-    //                 mpu6050.getGyroY(),
-    //                 mpu6050.getGyroZ());
-    // Serial.printf("roll:%.2f\tpitch:%.2f\tyaw:%.2fYawTotalAngle:%.2f\n",
-    //               INS.Roll, INS.Pitch, INS.Yaw, INS.YawTotalAngle);
+    Serial.printf("Roll:%.3f\tPitch:%3f\tYaw:%.3f\n", INS.Roll, INS.Pitch, INS.Yaw);
   }
 }
