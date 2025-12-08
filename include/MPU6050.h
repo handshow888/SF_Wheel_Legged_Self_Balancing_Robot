@@ -47,7 +47,7 @@ public:
   float getGyroY() { return gyroY; };
   float getGyroZ() { return gyroZ; };
 
-  void calcGyroOffsets(bool console = false, uint16_t delayBefore = 1000, uint16_t delayAfter = 3000);
+  void calcGyroOffsets(uint16_t delayBefore = 1000, uint16_t delayAfter = 3000);
   void calibrateAccelerometer(uint16_t delayBefore = 1000, uint16_t delayAfter = 3000);
 
   float getGyroXoffset() { return gyroXoffset; };
@@ -90,9 +90,9 @@ private:
 
   // 校准参数
   float calibration_matrix[3][3] = {
-      {1.0, 0.0, 0.0},
-      {0.0, 1.0, 0.0},
-      {0.0, 0.0, 1.0}};
+      {0.998503, 0.000984, 0.054694},
+      {0.000984, 0.999353, -0.035958},
+      {-0.054694, 0.035958, 0.997855}};
 };
 
 extern MPU6050 mpu6050;

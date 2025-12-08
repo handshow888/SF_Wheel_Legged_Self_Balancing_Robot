@@ -25,11 +25,13 @@ void setup()
 {
   Wire.begin(1, 2, 400000UL); // 初始化IIC
   Serial.begin(115200);       // 初始化调试串口
-  mpu6050.begin();            // 初始化MPU陀螺仪
-  Open_thread_function();     // 启动线程
+  mpu6050.begin(); // 初始化MPU陀螺仪
+  mpu6050.setGyroOffsets(3.73, -1.59, -0.16);
+  Open_thread_function(); // 启动线程
 
   /* USER CALIBRATE IMU START */
   // 静止平放时解注释获取imu校准矩阵，正常运行时注释
+  // delay(2);
   // mpu6050.calcGyroOffsets(true);
   // mpu6050.calibrateAccelerometer();
   /* USER CALIBRATE IMU END */
@@ -76,6 +78,14 @@ void IMUTask(void *pvParameters)
   while (true)
   {
     INS_Task();
+    // Serial.printf("Acc:%.2f\t%.2f\t%.2f\tGyro:%.2f\t%.2f\t%.2f\n",
+    //                 mpu6050.getAccX(),
+    //                 mpu6050.getAccY(),
+    //                 mpu6050.getAccZ(),
+    //                 mpu6050.getGyroX(),
+    //                 mpu6050.getGyroY(),
+    //                 mpu6050.getGyroZ());
+    // Serial.printf("roll:%.2f\tpitch:%.2f\tyaw:%.2fYawTotalAngle:%.2f\n",
+    //               INS.Roll, INS.Pitch, INS.Yaw, INS.YawTotalAngle);
   }
-  
 }

@@ -1,5 +1,27 @@
 #include "QuaternionEKF.h"
 
+// 打印任意 M×N 矩阵
+template <int M, int N>
+void PrintMatrix(const Matrix<M, N> &mat, const char *name = nullptr)
+{
+    if (name)
+    {
+        Serial.print(name);
+        Serial.println(":");
+    }
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            Serial.print(mat(i, j), 6); // 保留6位小数
+            if (j < N - 1)
+                Serial.print(",\t");
+        }
+        Serial.println();
+    }
+    Serial.println();
+}
+
 QEKF_INS_t QEKF_INS;
 
 const float IMU_QuaternionEKF_F[36] = {1, 0, 0, 0, 0, 0,
@@ -71,6 +93,7 @@ void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float me
     auto &matF = QEKF_INS.IMU_QuaternionEKF.F; // 避免与arduino宏冲突
     memcpy(&matF(0, 0), IMU_QuaternionEKF_F, sizeof(IMU_QuaternionEKF_F));
     memcpy(&QEKF_INS.IMU_QuaternionEKF.P(0, 0), IMU_QuaternionEKF_P, sizeof(IMU_QuaternionEKF_P));
+    // PrintMatrix(matF, "Matrix F");
 }
 
 /**
@@ -84,6 +107,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
     // 0.5(Ohm-Ohm^bias)*deltaT,用于更新工作点处的状态转移F矩阵
     static float halfgxdt, halfgydt, halfgzdt;
     static float accelInvNorm;
+    // Serial.printf("00000000000\n");
     if (!QEKF_INS.Initialized)
     {
         IMU_QuaternionEKF_Init(10, 0.001, 1000000 * 10, 0.9996 * 0 + 1, 0);
@@ -103,10 +127,27 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
     QEKF_INS.Gyro[1] = gy - QEKF_INS.GyroBias[1];
     QEKF_INS.Gyro[2] = gz - QEKF_INS.GyroBias[2];
 
+    static float Gyro0, Gyro1, Gyro2;
+    if (QEKF_INS.UpdateCount == 1)
+    {
+        Gyro0 = QEKF_INS.Gyro[0];
+        Gyro1 = QEKF_INS.Gyro[1];
+        Gyro2 = QEKF_INS.Gyro[2];
+    }
+    
+    // Serial.printf("Gyro[0]:%.6f\tGyro[1]:%.6f\tGyro[2]:%.6f\n",
+    //               Gyro0,
+    //               Gyro1,
+    //               Gyro2);
+
     // set F
     halfgxdt = 0.5f * QEKF_INS.Gyro[0] * dt;
     halfgydt = 0.5f * QEKF_INS.Gyro[1] * dt;
     halfgzdt = 0.5f * QEKF_INS.Gyro[2] * dt;
+    // Serial.printf("halfgxdt:%.6f\thalfgydt:%.6f\thalfgzdt:%.6f\n",
+    //               halfgxdt,
+    //               halfgydt,
+    //               halfgzdt);
 
     // 此部分设定状态转移矩阵F的左上角部分 4x4子矩阵,即0.5(Ohm-Ohm^bias)*deltaT,右下角有一个2x2单位阵已经初始化好了
     // 注意在predict步F的右上角是4x2的零矩阵,因此每次predict的时候都会调用memcpy用单位阵覆盖前一轮线性化后的矩阵
@@ -129,6 +170,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
     QEKFmatF(3, 0) = halfgzdt;
     QEKFmatF(3, 1) = halfgydt;
     QEKFmatF(3, 2) = -halfgxdt;
+    // PrintMatrix(QEKFmatF,"QEKFmatF");
 
     // accel low pass filter,加速度过一下低通滤波平滑数据,降低撞击和异常的影响
     if (QEKF_INS.UpdateCount == 0) // 如果是第一次进入,需要初始化低通滤波
@@ -143,6 +185,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
 
     // set z,单位化重力加速度向量
     accelInvNorm = invSqrt(QEKF_INS.Accel[0] * QEKF_INS.Accel[0] + QEKF_INS.Accel[1] * QEKF_INS.Accel[1] + QEKF_INS.Accel[2] * QEKF_INS.Accel[2]);
+    Serial.printf("accelInvNorm:%.6f\n", accelInvNorm);
     for (uint8_t i = 0; i < 3; i++)
     {
         QEKF_INS.IMU_QuaternionEKF.MeasuredVector[i] = QEKF_INS.Accel[i] * accelInvNorm; // 用加速度向量更新量测值
@@ -204,7 +247,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
     }
     QEKF_INS.YawTotalAngle = 360.0f * QEKF_INS.YawRoundCount + QEKF_INS.Yaw;
     QEKF_INS.YawAngleLast = QEKF_INS.Yaw;
-    QEKF_INS.UpdateCount++; // 初始化低通滤波用,计数测试用
+    ++QEKF_INS.UpdateCount; // 初始化低通滤波用,计数测试用
 }
 
 /**
@@ -439,7 +482,7 @@ static void IMU_QuaternionEKF_xhatUpdate(KalmanFilter_t *kf)
  */
 static void IMU_QuaternionEKF_Observe(KalmanFilter_t *kf)
 {
-    memcpy(IMU_QuaternionEKF_P, &kf->P(0,0), sizeof(IMU_QuaternionEKF_P));
-    memcpy(IMU_QuaternionEKF_K, &kf->K(0,0), sizeof(IMU_QuaternionEKF_K));
-    memcpy(IMU_QuaternionEKF_H, &kf->H(0,0), sizeof(IMU_QuaternionEKF_H));
+    memcpy(IMU_QuaternionEKF_P, &kf->P(0, 0), sizeof(IMU_QuaternionEKF_P));
+    memcpy(IMU_QuaternionEKF_K, &kf->K(0, 0), sizeof(IMU_QuaternionEKF_K));
+    memcpy(IMU_QuaternionEKF_H, &kf->H(0, 0), sizeof(IMU_QuaternionEKF_H));
 }

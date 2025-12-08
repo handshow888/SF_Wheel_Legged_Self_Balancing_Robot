@@ -58,25 +58,18 @@ void MPU6050::setGyroOffsets(float x, float y, float z)
 /**
  * @brief 静止时获取陀螺仪偏置校准量
  */
-void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delayAfter)
+void MPU6050::calcGyroOffsets(uint16_t delayBefore, uint16_t delayAfter)
 {
   float x = 0, y = 0, z = 0;
   int16_t rx, ry, rz;
 
   delay(delayBefore);
-  if (console)
-  {
-    Serial.println();
-    Serial.println("========================================");
-    Serial.println("Calculating gyro offsets");
-    Serial.print("DO NOT MOVE MPU6050");
-  }
+  Serial.println();
+  Serial.println("========================================");
+  Serial.println("Calculating gyro offsets");
+  Serial.print("DO NOT MOVE MPU6050");
   for (int i = 0; i < 3000; i++)
   {
-    if (console && i % 1000 == 0)
-    {
-      Serial.print(".");
-    }
     wire->beginTransmission(MPU6050_ADDR);
     wire->write(0x43);
     wire->endTransmission(false);
@@ -94,20 +87,17 @@ void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delay
   gyroYoffset = y / 3000;
   gyroZoffset = z / 3000;
 
-  if (console)
-  {
-    Serial.println();
-    Serial.println("Done!");
-    Serial.print("X : ");
-    Serial.println(gyroXoffset);
-    Serial.print("Y : ");
-    Serial.println(gyroYoffset);
-    Serial.print("Z : ");
-    Serial.println(gyroZoffset);
-    Serial.println("Program will start after 3 seconds");
-    Serial.print("========================================");
-    delay(delayAfter);
-  }
+  Serial.println();
+  Serial.println("Done!");
+  Serial.print("X : ");
+  Serial.println(gyroXoffset);
+  Serial.print("Y : ");
+  Serial.println(gyroYoffset);
+  Serial.print("Z : ");
+  Serial.println(gyroZoffset);
+  Serial.println("Program will start after 3 seconds");
+  Serial.print("========================================");
+  delay(delayAfter);
 }
 
 /**
@@ -224,14 +214,14 @@ void MPU6050::update(bool calibrated)
 
   temp = (rawTemp + 12412.0) / 340.0;
   // 计算加速度 16384.0是因为加速度计的量程是±2g，对应的分辨率是16位。
-  accX = ((float)rawAccX) / 16384.0;
-  accY = ((float)rawAccY) / 16384.0;
+  accX = -((float)rawAccX) / 16384.0;
+  accY = -((float)rawAccY) / 16384.0;
   accZ = ((float)rawAccZ) / 16384.0;
-  gyroX = ((float)rawGyroX) / 65.5;
-  gyroY = ((float)rawGyroY) / 65.5;
+  gyroX = -((float)rawGyroX) / 65.5;
+  gyroY = -((float)rawGyroY) / 65.5;
   gyroZ = ((float)rawGyroZ) / 65.5;
 
-  if (!calibrated)  // 如不需要校准，直接返回
+  if (!calibrated) // 如不需要校准，直接返回
     return;
 
   applyCalibration(); // 校准imu方向
