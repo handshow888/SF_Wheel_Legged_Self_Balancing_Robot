@@ -76,7 +76,7 @@ void Kalman_Filter_SetK(KalmanFilter_t *kf)
         auto temp_matrix = kf->H * kf->Pminus;    // temp_matrix = H·P'(k)
         auto temp_matrix1 = temp_matrix * kf->HT; // temp_matrix1 = H·P'(k)·HT
         kf->S = temp_matrix1 + kf->R;             // S = H P'(k) HT + R
-        temp_matrix1 = Invert(kf->S);             // temp_matrix1 = inv(H·P'(k)·HT + R)
+        temp_matrix1 = Inverse(kf->S);             // temp_matrix1 = inv(H·P'(k)·HT + R)
         auto temp_matrix2 = kf->Pminus * kf->HT;  // temp_matrix2 = P'(k)·HT
         kf->K = temp_matrix2 * temp_matrix1;
     }
