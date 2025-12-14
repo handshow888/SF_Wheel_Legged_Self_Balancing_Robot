@@ -178,7 +178,7 @@ void disable(uint8_t nodeID){
     sendCANCommand(nodeID, FUNC_ID_RPDO1, MITcommand);
 }
 
-void enable(uint8_t nodeID){
+void enableMotor(uint8_t nodeID){
     uint8_t MITcommand[8];
     MITcommand[0] = 0xFF;
     MITcommand[1] = 0xFF;
@@ -188,7 +188,7 @@ void enable(uint8_t nodeID){
     MITcommand[5] = 0xFF;
     MITcommand[6] = 0xFF;
     MITcommand[7] = 0xFC;
-    // Serial.printf("enable ID %hhu\n",nodeID);
+    // Serial.printf("enableMotor ID %hhu\n",nodeID);
     sendCANCommand(nodeID, FUNC_ID_RPDO1, MITcommand);
 }
 
