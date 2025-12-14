@@ -1,6 +1,7 @@
 #pragma once
 #include "Arduino.h"
 #include <BasicLinearAlgebra.h>
+#include "utils.h"
 
 using namespace BLA;
 

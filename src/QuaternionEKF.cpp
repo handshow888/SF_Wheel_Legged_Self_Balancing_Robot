@@ -1,27 +1,5 @@
 #include "QuaternionEKF.h"
 
-// 打印任意 M×N 矩阵
-template <int M, int N>
-void PrintMatrix(const Matrix<M, N> &mat, const char *name = nullptr)
-{
-    if (name)
-    {
-        Serial.print(name);
-        Serial.println(":");
-    }
-    for (int i = 0; i < M; i++)
-    {
-        for (int j = 0; j < N; j++)
-        {
-            Serial.print(mat(i, j), 6); // 保留6位小数
-            if (j < N - 1)
-                Serial.print(",\t");
-        }
-        Serial.println();
-    }
-    Serial.println();
-}
-
 QEKF_INS_t QEKF_INS;
 
 const float IMU_QuaternionEKF_F[36] = {1, 0, 0, 0, 0, 0,
@@ -126,13 +104,13 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
     QEKF_INS.Gyro[1] = gy - QEKF_INS.GyroBias[1];
     QEKF_INS.Gyro[2] = gz - QEKF_INS.GyroBias[2];
 
-    static float Gyro0, Gyro1, Gyro2;
-    if (QEKF_INS.UpdateCount == 1)
-    {
-        Gyro0 = QEKF_INS.Gyro[0];
-        Gyro1 = QEKF_INS.Gyro[1];
-        Gyro2 = QEKF_INS.Gyro[2];
-    }
+    // static float Gyro0, Gyro1, Gyro2;
+    // if (QEKF_INS.UpdateCount == 1)
+    // {
+    //     Gyro0 = QEKF_INS.Gyro[0];
+    //     Gyro1 = QEKF_INS.Gyro[1];
+    //     Gyro2 = QEKF_INS.Gyro[2];
+    // }
     
     // Serial.printf("Gyro[0]:%.6f\tGyro[1]:%.6f\tGyro[2]:%.6f\n",
     //               Gyro0,
@@ -181,6 +159,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
     QEKF_INS.Accel[0] = QEKF_INS.Accel[0] * QEKF_INS.accLPFcoef / (QEKF_INS.dt + QEKF_INS.accLPFcoef) + ax * QEKF_INS.dt / (QEKF_INS.dt + QEKF_INS.accLPFcoef);
     QEKF_INS.Accel[1] = QEKF_INS.Accel[1] * QEKF_INS.accLPFcoef / (QEKF_INS.dt + QEKF_INS.accLPFcoef) + ay * QEKF_INS.dt / (QEKF_INS.dt + QEKF_INS.accLPFcoef);
     QEKF_INS.Accel[2] = QEKF_INS.Accel[2] * QEKF_INS.accLPFcoef / (QEKF_INS.dt + QEKF_INS.accLPFcoef) + az * QEKF_INS.dt / (QEKF_INS.dt + QEKF_INS.accLPFcoef);
+    // Serial.printf("accX:%.2f\taccY:%.2f\taccZ:%.2f\n", QEKF_INS.Accel[0],QEKF_INS.Accel[1],QEKF_INS.Accel[2]);
 
     // set z,单位化重力加速度向量
     accelInvNorm = invSqrt(QEKF_INS.Accel[0] * QEKF_INS.Accel[0] + QEKF_INS.Accel[1] * QEKF_INS.Accel[1] + QEKF_INS.Accel[2] * QEKF_INS.Accel[2]);
@@ -191,7 +170,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
     }
 
     // get body state
-    QEKF_INS.gyro_norm = 1.0f / invSqrt(QEKF_INS.Gyro[0] * QEKF_INS.Gyro[0] +
+    QEKF_INS.gyro_norm = sqrt(QEKF_INS.Gyro[0] * QEKF_INS.Gyro[0] +
                                         QEKF_INS.Gyro[1] * QEKF_INS.Gyro[1] +
                                         QEKF_INS.Gyro[2] * QEKF_INS.Gyro[2]);
     QEKF_INS.accl_norm = 1.0f / accelInvNorm;
