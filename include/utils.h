@@ -8,9 +8,11 @@ float lowPassFilter(float currentValue, float previousValue, float alpha);
 float invSqrt(float x);
 void EularAngleToQuaternion(float Yaw, float Pitch, float Roll, float *q);
 void QuaternionToEularAngle(float *q, float *Yaw, float *Pitch, float *Roll);
+float normalizeRadianFmodf(float radian);
+float normalizeRadian(float radian);
 
-constexpr float deg2rad = PI / 180.0f;  // 乘以此变量可从角度变换到弧度
-constexpr float rad2deg = 180.0f / PI;// 乘以此变量可从弧度变换到角度
+constexpr float deg2rad = PI / 180.0f; // 乘以此变量可从角度变换到弧度
+constexpr float rad2deg = 180.0f / PI; // 乘以此变量可从弧度变换到角度
 
 // 打印任意 M×N 矩阵
 template <int M, int N>

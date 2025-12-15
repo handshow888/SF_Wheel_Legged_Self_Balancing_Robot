@@ -11,9 +11,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "ppm.h"
-// #include "Motor.h"
+#include "Motor.h"
 #include "robot.h"
-// #include "pid.h"
+#include "kinematics.h"
+#include "pid.h"
 #include "utils.h"
 
 MPU6050 mpu6050 = MPU6050(Wire); // 实例化MPU6050
@@ -27,10 +28,10 @@ void setup()
   Serial.begin(115200);       // 初始化调试串口
   mpu6050.begin();            // 初始化MPU陀螺仪
   mpu6050.setGyroOffsets(3.73, -1.59, -0.16);
-  ppm_init(); //遥控器读取中断初始化
+  ppm_init(); // 遥控器读取中断初始化
   CANInit();
-  enableJointMotors(); // 使能关节电机
-  // motorInit();            // 轮毂电机初始化
+  enableJointMotors();    // 使能关节电机
+  motorInit();            // 轮毂电机初始化
   Open_thread_function(); // 启动线程
 
   /* USER CALIBRATE IMU START */
@@ -43,9 +44,18 @@ void setup()
 
 void loop()
 {
-  storeFilteredPPMData();
-  remote_switch();
-  CAN_Control();
+  storeFilteredPPMData(); // 获取遥控器数据
+  remoteSwitch();         // 获取遥控器模式
+  mapPPMToRobotControl(); // 映射遥控器各通道数值为控制指令
+
+  legEndCalculate();                                                                             // 计算足端目标位置
+  inverseKinematics(leftLegKinematics, rightLegKinematics, leftLegEndTarget, rightLegEndTarget); // 运动学逆解
+  mapJointMotorAngle();                                                                          // 将运动学逆解的结果映射到关节电机角度pos
+  CAN_Control();                                                                                 // 发送关节电机控制指令
+
+  interpolatePID();                                                                            // 根据腿高插值拟合pid参数
+  wheelControlPid();                                                                           // pid计算轮毂电机扭矩
+  sendMotorTargets(enableHubMotor * rightWheelTorTarget, enableHubMotor * leftWheelTorTarget); // 发送控制轮毂电机的目标值 右, 左
 }
 
 // 启动线程

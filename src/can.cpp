@@ -10,9 +10,12 @@ MIT RightFronMITCtrlParam;
 MIT RightRearMITCtrlParam;
 uint32_t prev_ts;
 uint16_t printCount = 0;
-int motorIndex = 0;             // 当前启动的电机索引
 unsigned long lastSendTime = 0; // 记录上次发送时间
 float Am_kp = 1.0;
+float motorRightRear;
+float motorLeftRear;
+float motorRightFront;
+float motorLeftFront;
 
 // 定义腿部标识和对应的控制参数
 struct LegCommand
@@ -32,26 +35,26 @@ void CAN_Control()
   MITCtrlParam.kp = 0;
   MITCtrlParam.kd = 0;
   MITCtrlParam.tor = 0;
-  // 左腿关节电机1 控制参数  pos正  MIT协议为左后腿
-  // LeftFronMITCtrlParam.pos = 1 * motorLeftFront; // 28 - motorLeftRear motorLeftFront
+  // 左腿关节电机1 控制参数
+  LeftFronMITCtrlParam.pos = 1 * motorLeftFront;
   LeftFronMITCtrlParam.vel = 0;
   LeftFronMITCtrlParam.kp = Am_kp;
   LeftFronMITCtrlParam.kd = 0;
   LeftFronMITCtrlParam.tor = 0;
-  // 左腿关节电机2 控制参数 pos负 控制升高降低  MIT协议为左前腿
-  // LeftRearMITCtrlParam.pos = 1 * motorLeftRear; //-23 + motorLeftFront
+  // 左腿关节电机2 控制参数
+  LeftRearMITCtrlParam.pos = 1 * motorLeftRear;
   LeftRearMITCtrlParam.vel = 0;
   LeftRearMITCtrlParam.kp = Am_kp;
   LeftRearMITCtrlParam.kd = 0;
   LeftRearMITCtrlParam.tor = 0;
   // 右腿关节电机1 控制参数
-  // RightFronMITCtrlParam.pos = 1 * motorRightRear;
+  RightFronMITCtrlParam.pos = 1 * motorRightRear;
   RightFronMITCtrlParam.vel = 0;
   RightFronMITCtrlParam.kp = Am_kp;
   RightFronMITCtrlParam.kd = 0;
   RightFronMITCtrlParam.tor = 0;
   // 右腿关节电机2 控制参数
-  // RightRearMITCtrlParam.pos = 1 * motorRightFront;
+  RightRearMITCtrlParam.pos = 1 * motorRightFront;
   RightRearMITCtrlParam.vel = 0;
   RightRearMITCtrlParam.kp = Am_kp;
   RightRearMITCtrlParam.kd = 0;
@@ -60,15 +63,27 @@ void CAN_Control()
   // 打印关节电机电角度 1 2 3 4
   // Serial.printf("%.2f,%.2f,%.2f,%.2f\n", devicesState[0].pos, devicesState[1].pos, devicesState[2].pos, devicesState[3].pos);
 
-  // if (currentTime - lastSendTime >= SEND_INTERVAL)
-  // {
-  //   // 发送命令
-  //   sendMITCommand(0x02, LeftRearMITCtrlParam);
-  //   sendMITCommand(0x01, RightRearMITCtrlParam);
-  //   sendMITCommand(0x03, RightFronMITCtrlParam);
-  //   sendMITCommand(0x04, LeftFronMITCtrlParam);
-  //   lastSendTime = currentTime; // 更新最后发送时间
-  // }
+  if (currentTime - lastSendTime >= SEND_INTERVAL)
+  {
+    // 发送命令
+    sendMITCommand(0x01, RightRearMITCtrlParam);
+    sendMITCommand(0x02, LeftRearMITCtrlParam);
+    sendMITCommand(0x03, RightFronMITCtrlParam);
+    sendMITCommand(0x04, LeftFronMITCtrlParam);
+    lastSendTime = currentTime; // 更新最后发送时间
+  }
+}
+
+/**
+ * @brief 将运动学逆解的结果映射到关节电机角度pos
+ */
+void mapJointMotorAngle()
+{
+  motorRightRear = (1.80 + 1.57 * 8) - (rightLegKinematics.alpha * 8); // 1
+  motorRightFront = (1.66 + 1.57 * 8) - (rightLegKinematics.beta * 8); // 3
+
+  motorLeftRear = (2.29 - 1.57 * 8) + (leftLegKinematics.alpha * 8); // 2
+  motorLeftFront = (5.65 - 1.57 * 8) + (leftLegKinematics.beta * 8); // 4
 }
 
 // 内部启动指定电机
@@ -80,7 +95,8 @@ void startMotor(int motorIndex)
 
 void enableJointMotors()
 {
-  for (int i = 0; i < 4; i++)
+  static int motorIndex = 0; // 当前启动的电机索引
+  for (int i = 0; i < 4; ++i)
   {
     Serial.println("...");
     startMotor(motorIndex); // 启动当前索引的电机

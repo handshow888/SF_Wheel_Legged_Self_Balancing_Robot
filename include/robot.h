@@ -1,6 +1,9 @@
 #pragma once
-
+#include "Arduino.h"
 #include "CAN/CAN_comm.h"
+#include "CAN/can.h"
+#include "ppm.h"
+#include "pid.h"
 
 // 连杆长度参数
 #define L1 150 // 后大腿长
@@ -26,6 +29,27 @@ typedef struct
 
 } LegKinematicsParams;
 
+extern LegKinematicsParams leftLegKinematics, rightLegKinematics; // 左右腿运动学参数
+extern Point leftLegEndTarget, rightLegEndTarget;                       // 左右腿足端目标点
 
-extern LegKinematicsParams leftLegKinematics, rightLegKinematics;   // 左右腿运动学参数
-extern Point leftEndTarget, rightEndTarget; // 左右腿足端目标点
+extern float motor1_vel, motor2_vel; // 两个轮毂电机的轮速 rad/s
+
+extern float remoteLinearVel;     // 从遥控器接收的前进后退速度
+extern float remoteSteering;      // 从遥控器接收的左右转向速度
+extern float remoteBalanceOffset; // 从遥控器接收的平衡pitch偏移量
+extern float remoteLegHeight;     // 从遥控器接收的腿高 单位：mm
+extern float remoteShakeShoulderValue; // 从遥控器接收的抖肩值
+
+extern const int legHeightMin; // 腿高最低值
+extern const int legHeightMax; // 腿高最高值
+
+extern float rightWheelTorTarget; // 右轮毂电机目标扭矩
+extern float leftWheelTorTarget;  // 左轮毂电机目标扭矩
+
+void legEndCalculate();
+void jumpControl();
+
+void mapPPMToRobotControl();
+float mapJoyStickValueCenter(int inputValue, float scale);
+float mapJoyStickValueKnob(int inputValue, float scale);
+int mapJoyStickValueHeight(int inputValue);

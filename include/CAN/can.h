@@ -3,13 +3,18 @@
 
 #include "Arduino.h"
 #include "CAN_comm.h"
-// #include "robot.h"
+#include "robot.h"
 
 #define SEND_INTERVAL 1 // 限制发送频率，单位为毫秒
 extern float Am_kp;
+extern float motorRightRear;
+extern float motorLeftRear;
+extern float motorRightFront;
+extern float motorLeftFront;
 
 void CAN_Control();
 void startMotor(int motorIndex);
 void enableJointMotors();
+void mapJointMotorAngle();
 
 #endif

@@ -6,7 +6,9 @@ uint32_t lastTime = 0;
 uint8_t currentChannel = 0;
 
 uint8_t enableHubMotor = 0;
-float alpha = 0.02; // 设置滤波系数（值越小，平滑度越高）;
+PPM_KNOB_MODE knobMode;      // 左旋钮模式控制
+JUMPING_PROCESS jumpProcess; // 跳跃过程
+float alpha = 0.02;          // 设置滤波系数（值越小，平滑度越高）;
 
 // 遥控器PPM读取初始化
 void ppm_init()
@@ -65,7 +67,7 @@ PPM_SWITCH_POS getSwitchPos(int switchValue)
         return PPM_SWITCH_POS::DOWN;
 }
 
-void remote_switch()
+void remoteSwitch()
 {
     /***** 右拨杆 *****/
     switch (getSwitchPos(PPM_SWITCH_RIGHT))
@@ -84,13 +86,56 @@ void remote_switch()
     }
 
     /***** 左拨杆 *****/
-    switch (getSwitchPos(PPM_SWITCH_LEFT))
+    // switch (getSwitchPos(PPM_SWITCH_LEFT))
+    // {
+    // case PPM_SWITCH_POS::UP:
+    //     break;
+    // case PPM_SWITCH_POS::DOWN:
+    //     break;
+    // default:
+    //     break;
+    // }
+
+    static auto lastSwitchLeft = getSwitchPos(PPM_SWITCH_LEFT);
+    auto switchLeft = getSwitchPos(PPM_SWITCH_LEFT);
+
+    /***** 左旋钮 *****/
+    if (PPM_LEFT_KNOB < 1200) // 左旋钮逆时针到顶 跳跃
     {
-    case PPM_SWITCH_POS::UP:
-        break;
-    case PPM_SWITCH_POS::DOWN:
-        break;
-    default:
-        break;
+        switch (switchLeft)
+        {
+        case PPM_SWITCH_POS::UP:
+            knobMode = PPM_KNOB_MODE::Normal;
+            jumpProcess = JUMPING_PROCESS::LAND;
+            break;
+        case PPM_SWITCH_POS::DOWN:
+            if (lastSwitchLeft == PPM_SWITCH_POS::UP)
+            {
+                knobMode = PPM_KNOB_MODE::Jump;
+                jumpProcess = JUMPING_PROCESS::READY;
+            }
+            break;
+        default:
+            break;
+        }
     }
+    else if (PPM_LEFT_KNOB > 1800) // 左旋钮顺时针到顶 抖肩
+    {
+        switch (switchLeft)
+        {
+        case PPM_SWITCH_POS::UP:
+            knobMode = PPM_KNOB_MODE::Normal;
+            break;
+        case PPM_SWITCH_POS::DOWN:
+            knobMode = PPM_KNOB_MODE::ShakeShoulder;
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        knobMode = PPM_KNOB_MODE::Normal;
+    }
+    lastSwitchLeft = switchLeft;
 }

@@ -53,3 +53,27 @@ void QuaternionToEularAngle(float *q, float *Yaw, float *Pitch, float *Roll)
   *Pitch = atan2f(2.0f * (q[0] * q[1] + q[2] * q[3]), 2.0f * (q[0] * q[0] + q[3] * q[3]) - 1.0f) * 57.295779513f;
   *Roll = asinf(2.0f * (q[0] * q[2] - q[1] * q[3])) * 57.295779513f;
 }
+
+/**
+ * @brief 归一化弧度到[-π, π)
+ */
+float normalizeRadianFmodf(float radian)
+{
+  radian = fmodf(radian + PI, 2.0 * PI);
+  if (radian < 0)
+    radian += 2.0 * PI;
+  return radian - PI;
+}
+
+/**
+ * @brief 归一化弧度到[-π, π]
+ * @note while循环次数少的情况下比fmod快
+ */
+float normalizeRadian(float radian)
+{
+  while (radian > PI)
+    radian -= 2.0f * PI;
+  while (radian <= -PI)
+    radian += 2.0f * PI;
+  return radian;
+}
