@@ -16,6 +16,7 @@ typedef struct
     float balanceKp;
     float balanceKd;
     float legXKp;
+    float legXKd;
 } BipedalPids;
 
 extern PidParams pidVel;     // 速度环pid

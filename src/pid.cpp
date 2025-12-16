@@ -11,10 +11,10 @@ void wheelControlPid()
 {
     float rightWheelVel = -motor1_vel; // 左轮轮速 rad/s
     float leftWheelVel = -motor2_vel;  // 右轮轮速 rad/s
-    float currentVel = (leftWheelVel + rightWheelVel) * 0.5f;
+    float currentVel = (leftWheelVel + rightWheelVel) * wheelRadius * 0.5f;
 
     float pitchTarget = pidVel.kp * (remoteLinearVel - currentVel);
-    float wheelTorTarget = pidBalance.kp * (pitchTarget - INS.Pitch + remoteBalanceOffset) + pidBalance.kd * mpu6050.getGyroY();
+    float wheelTorTarget = pidBalance.kp * (pitchTarget - INS.Pitch * deg2rad + remoteBalanceOffset) + pidBalance.kd * mpu6050.getGyroY() * deg2rad;
     wheelTorTarget = clamp(wheelTorTarget, -5, 5);
 
     rightWheelTorTarget = wheelTorTarget + remoteSteering;
@@ -33,9 +33,9 @@ void interpolatePID()
     const float y1 = (legHeightMin + legHeightMax) * 0.5;
     const float y2 = legHeightMax;
 
-    BipedalPids pid0 = {1, 1, 1, 1};
-    BipedalPids pid1 = {1, 1, 1, 1};
-    BipedalPids pid2 = {1, 1, 1, 1};
+    BipedalPids pid0 = {1, 1, 1, 1, 0};
+    BipedalPids pid1 = {1, 1, 1, 1, 0};
+    BipedalPids pid2 = {1, 1, 1, 1, 0};
 
     if (remoteLegHeight <= y1)
     {
@@ -44,6 +44,7 @@ void interpolatePID()
         pidBalance.kp = pid0.balanceKp + ratio * (pid1.balanceKp - pid0.balanceKp);
         pidBalance.kd = pid0.balanceKd + ratio * (pid1.balanceKd - pid0.balanceKd);
         pidLegX.kp = pid0.legXKp + ratio * (pid1.legXKp - pid0.legXKp);
+        pidLegX.kd = pid0.legXKd + ratio * (pid1.legXKd - pid0.legXKd);
     }
     else
     {
@@ -52,5 +53,6 @@ void interpolatePID()
         pidBalance.kp = pid1.balanceKp + ratio * (pid2.balanceKp - pid1.balanceKp);
         pidBalance.kd = pid1.balanceKd + ratio * (pid2.balanceKd - pid1.balanceKd);
         pidLegX.kp = pid1.legXKp + ratio * (pid2.legXKp - pid1.legXKp);
+        pidLegX.kd = pid1.legXKd + ratio * (pid2.legXKd - pid1.legXKd);
     }
 }

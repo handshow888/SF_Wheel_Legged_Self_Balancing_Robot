@@ -47,13 +47,13 @@ void loop()
   storeFilteredPPMData(); // 获取遥控器数据
   remoteSwitch();         // 获取遥控器模式
   mapPPMToRobotControl(); // 映射遥控器各通道数值为控制指令
+  interpolatePID();       // 根据腿高插值拟合pid参数
 
   legEndCalculate();                                                                             // 计算足端目标位置
   inverseKinematics(leftLegKinematics, rightLegKinematics, leftLegEndTarget, rightLegEndTarget); // 运动学逆解
   mapJointMotorAngle();                                                                          // 将运动学逆解的结果映射到关节电机角度pos
   CAN_Control();                                                                                 // 发送关节电机控制指令
 
-  interpolatePID();                                                                            // 根据腿高插值拟合pid参数
   wheelControlPid();                                                                           // pid计算轮毂电机扭矩
   sendMotorTargets(enableHubMotor * rightWheelTorTarget, enableHubMotor * leftWheelTorTarget); // 发送控制轮毂电机的目标值 右, 左
 }

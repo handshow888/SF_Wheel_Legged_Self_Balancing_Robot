@@ -13,10 +13,12 @@ float remoteLegHeight;          // 从遥控器接收的腿高 单位：mm
 float remoteShakeShoulderValue; // 从遥控器接收的抖肩值
 
 const int legHeightMin = 140; // 腿高最低值
-const int legHeightMax = 300; // 腿高最高值
+const int legHeightMax = 290; // 腿高最高值
 
 float rightWheelTorTarget; // 右轮毂电机目标扭矩
 float leftWheelTorTarget;  // 左轮毂电机目标扭矩
+
+const float wheelRadius = 0.07; // 轮子半径 m
 
 /**
  * @brief 计算足端目标坐标（逆解初值）
@@ -52,8 +54,8 @@ void legEndCalculate()
     default:
         break;
     }
-    float currentVel = ((-motor1_vel) + (-motor2_vel)) * 0.5f;
-    leftLegEndTarget.x = L4 / 2 + pidLegX.kp * -(remoteLinearVel - currentVel);
+    float currentVel = ((-motor1_vel) + (-motor2_vel)) * wheelRadius * 0.5f;
+    leftLegEndTarget.x = L4 / 2 + pidLegX.kp * -(remoteLinearVel - currentVel) + pidLegX.kd * mpu6050.getGyroY() * deg2rad;
     leftLegEndTarget.x = clamp(leftLegEndTarget.x, -100, L4 + 100);
     rightLegEndTarget.x = leftLegEndTarget.x;
 }
