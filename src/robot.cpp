@@ -104,8 +104,11 @@ void mapPPMToRobotControl()
     remoteLinearVel = mapJoyStickValueCenter(PPM_RIGHT_STICK_UD, 0.01f);
     remoteSteering = mapJoyStickValueCenter(PPM_RIGHT_STICK_LR, 0.015f);
     remoteBalanceOffset = mapJoyStickValueKnob(PPM_RIGHT_KNOB, 0.01f);
-    remoteLegHeight = mapJoyStickValueHeight(PPM_LEFT_STICK_UD);
     remoteShakeShoulderValue = mapJoyStickValueCenter(PPM_LEFT_STICK_LR, 1.0f / 15.0f);
+    if (knobMode == PPM_KNOB_MODE::Jump)
+        remoteLegHeight = legHeightMin;
+    else
+        remoteLegHeight = mapJoyStickValueHeight(PPM_LEFT_STICK_UD);
 }
 
 /**

@@ -109,7 +109,7 @@ void remoteSwitch()
             jumpProcess = JUMPING_PROCESS::LAND;
             break;
         case PPM_SWITCH_POS::DOWN:
-            if (lastSwitchLeft == PPM_SWITCH_POS::UP)
+            if (lastSwitchLeft == PPM_SWITCH_POS::UP) // 左拨杆刚从上打到下时才开启跳跃模式
             {
                 knobMode = PPM_KNOB_MODE::Jump;
                 jumpProcess = JUMPING_PROCESS::READY;
