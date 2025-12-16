@@ -54,10 +54,72 @@ void legEndCalculate()
     default:
         break;
     }
-    float currentVel = ((-motor1_vel) + (-motor2_vel)) * wheelRadius * 0.5f;
-    leftLegEndTarget.x = L4 / 2 + pidLegX.kp * -(remoteLinearVel - currentVel) + pidLegX.kd * mpu6050.getGyroY() * deg2rad;
-    leftLegEndTarget.x = clamp(leftLegEndTarget.x, -100, L4 + 100);
+
+    /*↓↓↓ if use pid ↓↓↓*/
+    // float currentVel = ((-motor1_vel) + (-motor2_vel)) * wheelRadius * 0.5f;
+    // leftLegEndTarget.x = L4 / 2 + pidLegX.kp * -(remoteLinearVel - currentVel) + pidLegX.kd * mpu6050.getGyroY() * deg2rad;
+    // leftLegEndTarget.x = clamp(leftLegEndTarget.x, -100, L4 + 100);
+    /*↑↑↑ if use pid end ↑↑↑*/
+
+    /*↓↓↓ else if use lqr ↓↓↓*/
+    leftLegEndTarget.x = L4 / 2;
+    /*↑↑↑ else if use lqr end ↑↑↑*/
     rightLegEndTarget.x = leftLegEndTarget.x;
+}
+
+float calc_K1(float h) { return 0.000652 * h * h - 0.207928 * h + 1.964124; }
+float calc_K2(float h) { return 0.000045 * h * h - 0.027259 * h + 1.626482; }
+float calc_K3(float h) { return -0.000000 * h * h + 0.000000 * h + -0.000000; }
+float calc_K4(float h) { return 0.000006 * h * h - 0.003406 * h - 4.027118; }
+
+// 位移计算
+float updatePositionLQR(float vel)
+{
+    static unsigned long lastTime = 0;
+    static float positionLQR = 0; // LQR计算时使用的累计位移
+    uint32_t now = micros();
+    if (lastTime == 0)
+    {
+        lastTime = now;
+    }
+    float delta_t = (now - lastTime) * 1e-6f;
+    lastTime = now;
+    positionLQR += vel * delta_t;
+    float POS_MAX = 0.1; // 10 cm
+    positionLQR = clamp(positionLQR, -POS_MAX, POS_MAX);
+    return positionLQR; // 单位m
+}
+/**
+ * @brief LQR控制轮毂电机扭矩
+ * u = -Kx
+ */
+void wheelControlLQR()
+{
+    float KRight[4], KLeft[4];
+    // 右腿
+    KRight[0] = calc_K1(rightLegEndTarget.y);
+    KRight[1] = calc_K2(rightLegEndTarget.y);
+    KRight[2] = calc_K3(rightLegEndTarget.y);
+    KRight[3] = calc_K4(rightLegEndTarget.y);
+    float currentVel = ((-motor1_vel) + (-motor2_vel)) * wheelRadius * 0.5f;
+    float positionLQR = updatePositionLQR(currentVel);
+    float wheelTorTarget = -(KRight[0] * (INS.Pitch) * PI / 180 + KRight[1] * mpu6050.getGyroY() * PI / 180 + KRight[2] * positionLQR + KRight[3] * currentVel) + 0.1 * remoteLinearVel;
+    wheelTorTarget = clamp(wheelTorTarget, -5, 5);
+    rightWheelTorTarget = wheelTorTarget + remoteSteering;
+    rightWheelTorTarget = clamp(rightWheelTorTarget, -5, 5);
+
+    // 左腿
+    if (rightLegEndTarget.y != leftLegEndTarget.y)
+    {
+        KLeft[0] = calc_K1(leftLegEndTarget.y);
+        KLeft[1] = calc_K2(leftLegEndTarget.y);
+        KLeft[2] = calc_K3(leftLegEndTarget.y);
+        KLeft[3] = calc_K4(leftLegEndTarget.y);
+        wheelTorTarget = -(KLeft[0] * (INS.Pitch) * PI / 180 + KLeft[1] * mpu6050.getGyroY() * PI / 180 + KLeft[2] * positionLQR + KLeft[3] * currentVel) + 0.1 * remoteLinearVel;
+        wheelTorTarget = clamp(wheelTorTarget, -5, 5);
+    }
+    leftWheelTorTarget = wheelTorTarget - remoteSteering;
+    leftWheelTorTarget = clamp(leftWheelTorTarget, -5, 5);
 }
 
 /**
@@ -104,7 +166,7 @@ void jumpControl()
 void mapPPMToRobotControl()
 {
     remoteLinearVel = mapJoyStickValueCenter(PPM_RIGHT_STICK_UD, 0.01f);
-    remoteSteering = mapJoyStickValueCenter(PPM_RIGHT_STICK_LR, 0.015f);
+    remoteSteering = mapJoyStickValueCenter(PPM_RIGHT_STICK_LR, -0.015f); // 负号将左右符号改成符合右手系
     remoteBalanceOffset = mapJoyStickValueKnob(PPM_RIGHT_KNOB, 0.01f);
     remoteShakeShoulderValue = mapJoyStickValueCenter(PPM_LEFT_STICK_LR, 1.0f / 15.0f);
     if (knobMode == PPM_KNOB_MODE::Jump)

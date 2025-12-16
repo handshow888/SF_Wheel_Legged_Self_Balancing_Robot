@@ -7,7 +7,7 @@ PidParams pidLegX = {0, 0};    // 腿的足端X坐标pid
 /**
  * @brief pid计算轮毂电机扭矩
  */
-void wheelControlPid()
+void wheelControlPID()
 {
     float rightWheelVel = -motor1_vel; // 左轮轮速 rad/s
     float leftWheelVel = -motor2_vel;  // 右轮轮速 rad/s

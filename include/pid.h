@@ -23,5 +23,5 @@ extern PidParams pidVel;     // 速度环pid
 extern PidParams pidBalance; // 直立环pid
 extern PidParams pidLegX;    // 腿的足端X坐标pid
 
-void wheelControlPid();
+void wheelControlPID();
 void interpolatePID();

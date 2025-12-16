@@ -50,6 +50,7 @@ extern const float wheelRadius; // 轮子半径
 
 void legEndCalculate();
 void jumpControl();
+void wheelControlLQR();
 
 void mapPPMToRobotControl();
 float mapJoyStickValueCenter(int inputValue, float scale);
