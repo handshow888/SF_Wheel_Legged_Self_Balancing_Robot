@@ -36,32 +36,32 @@ void CAN_Control()
   MITCtrlParam.kd = 0;
   MITCtrlParam.tor = 0;
   // 左腿关节电机1 控制参数
-  LeftFronMITCtrlParam.pos = 1 * motorLeftFront;
+  LeftFronMITCtrlParam.pos = motorLeftFront;
   LeftFronMITCtrlParam.vel = 0;
   LeftFronMITCtrlParam.kp = Am_kp;
   LeftFronMITCtrlParam.kd = 0;
   LeftFronMITCtrlParam.tor = 0;
   // 左腿关节电机2 控制参数
-  LeftRearMITCtrlParam.pos = 1 * motorLeftRear;
+  LeftRearMITCtrlParam.pos = motorLeftRear;
   LeftRearMITCtrlParam.vel = 0;
   LeftRearMITCtrlParam.kp = Am_kp;
   LeftRearMITCtrlParam.kd = 0;
   LeftRearMITCtrlParam.tor = 0;
   // 右腿关节电机1 控制参数
-  RightFronMITCtrlParam.pos = 1 * motorRightRear;
+  RightFronMITCtrlParam.pos = motorRightFront;
   RightFronMITCtrlParam.vel = 0;
   RightFronMITCtrlParam.kp = Am_kp;
   RightFronMITCtrlParam.kd = 0;
   RightFronMITCtrlParam.tor = 0;
   // 右腿关节电机2 控制参数
-  RightRearMITCtrlParam.pos = 1 * motorRightFront;
+  RightRearMITCtrlParam.pos = motorRightRear;
   RightRearMITCtrlParam.vel = 0;
   RightRearMITCtrlParam.kp = Am_kp;
   RightRearMITCtrlParam.kd = 0;
   RightRearMITCtrlParam.tor = 0;
 
   // 打印关节电机电角度 1 2 3 4
-  // Serial.printf("%.2f,%.2f,%.2f,%.2f\n", devicesState[0].pos, devicesState[1].pos, devicesState[2].pos, devicesState[3].pos);
+  Serial.printf("%.2f,%.2f,%.2f,%.2f\n", devicesState[0].pos, devicesState[1].pos, devicesState[2].pos, devicesState[3].pos);
 
   if (currentTime - lastSendTime >= SEND_INTERVAL)
   {
@@ -84,6 +84,15 @@ void mapJointMotorAngle()
 
   motorLeftRear = (2.29 - 1.57 * 8) + (leftLegKinematics.alpha * 8); // 2
   motorLeftFront = (5.65 - 1.57 * 8) + (leftLegKinematics.beta * 8); // 4
+  // Serial.printf("Target:%.2f,%.2f,%.2f,%.2f\talphaL:%.2f,betaL:%.2f,alphaR:%.2f,betaR:%.2f\n",
+  //               motorRightRear,
+  //               motorLeftRear,
+  //               motorRightFront,
+  //               motorLeftFront,
+  //               leftLegKinematics.alpha,
+  //               leftLegKinematics.beta,
+  //               rightLegKinematics.alpha / PI * 180.0f,
+  //               rightLegKinematics.beta / PI * 180.0f);
 }
 
 // 内部启动指定电机
@@ -96,7 +105,7 @@ void startMotor(int motorIndex)
 void enableJointMotors()
 {
   static int motorIndex = 0; // 当前启动的电机索引
-  for (int i = 0; i < 4; ++i)
+  for (int i = 1; i <= 5; ++i)
   {
     Serial.println("...");
     startMotor(motorIndex); // 启动当前索引的电机

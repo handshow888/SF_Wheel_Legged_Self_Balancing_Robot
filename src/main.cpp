@@ -30,6 +30,7 @@ void setup()
   mpu6050.setGyroOffsets(3.73, -1.59, -0.16);
   ppm_init(); // 遥控器读取中断初始化
   CANInit();
+  delay(1000);
   enableJointMotors();    // 使能关节电机
   motorInit();            // 轮毂电机初始化
   Open_thread_function(); // 启动线程
@@ -55,8 +56,10 @@ void loop()
   CAN_Control();                                                                                 // 发送关节电机控制指令
 
   // wheelControlPID();                                                                           // pid计算轮毂电机扭矩
-  wheelControlLQR();                                                                           // lqr计算轮毂电机扭矩
+  wheelControlLQR(); // lqr计算轮毂电机扭矩
   sendMotorTargets(enableHubMotor * rightWheelTorTarget, enableHubMotor * leftWheelTorTarget); // 发送控制轮毂电机的目标值 右, 左
+  // sendMotorTargets(enableHubMotor * remoteLinearVel, enableHubMotor * remoteLinearVel); // 发送控制轮毂电机的目标值 右, 左
+  // Serial.printf("leftVel:%.2f\trightVel:%.2f\n", motor2_vel, motor1_vel);
 }
 
 // 启动线程

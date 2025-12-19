@@ -37,7 +37,7 @@ extern float motor1_vel, motor2_vel; // 两个轮毂电机的轮速 rad/s
 extern float remoteLinearVel;          // 从遥控器接收的前进后退速度
 extern float remoteSteering;           // 从遥控器接收的左右转向速度
 extern float remoteBalanceOffset;      // 从遥控器接收的平衡pitch偏移量
-extern float remoteLegHeight;          // 从遥控器接收的腿高 单位：mm
+extern int remoteLegHeight;          // 从遥控器接收的腿高 单位：mm
 extern float remoteShakeShoulderValue; // 从遥控器接收的抖肩值
 
 extern const int legHeightMin; // 腿高最低值

@@ -9,7 +9,7 @@ float motor1_vel = 0, motor2_vel = 0;
 float remoteLinearVel;          // 从遥控器接收的前进后退速度
 float remoteSteering;           // 从遥控器接收的左右转向速度
 float remoteBalanceOffset;      // 从遥控器接收的平衡pitch偏移量
-float remoteLegHeight;          // 从遥控器接收的腿高 单位：mm
+int remoteLegHeight;            // 从遥控器接收的腿高 单位：mm
 float remoteShakeShoulderValue; // 从遥控器接收的抖肩值
 
 const int legHeightMin = 140; // 腿高最低值
@@ -34,8 +34,8 @@ void legEndCalculate()
         rightLegEndTarget.y = remoteLegHeight;
         break;
     case PPM_KNOB_MODE::ShakeShoulder:
-        leftLegEndTarget.y = remoteLegHeight - remoteShakeShoulderValue;
-        rightLegEndTarget.y = remoteLegHeight + remoteShakeShoulderValue;
+        leftLegEndTarget.y = remoteLegHeight + remoteShakeShoulderValue;
+        rightLegEndTarget.y = remoteLegHeight - remoteShakeShoulderValue;
         leftLegEndTarget.y = clamp(leftLegEndTarget.y, legHeightMin, legHeightMax);
         rightLegEndTarget.y = clamp(rightLegEndTarget.y, legHeightMin, legHeightMax);
         break;
@@ -57,20 +57,25 @@ void legEndCalculate()
 
     /*↓↓↓ if use pid ↓↓↓*/
     // float currentVel = ((-motor1_vel) + (-motor2_vel)) * wheelRadius * 0.5f;
-    // leftLegEndTarget.x = L4 / 2 + pidLegX.kp * -(remoteLinearVel - currentVel) + pidLegX.kd * mpu6050.getGyroY() * deg2rad;
+    // leftLegEndTarget.x = L5 / 2 + pidLegX.kp * -(remoteLinearVel - currentVel) + pidLegX.kd * mpu6050.getGyroY() * deg2rad;
     // leftLegEndTarget.x = clamp(leftLegEndTarget.x, -100, L4 + 100);
     /*↑↑↑ if use pid end ↑↑↑*/
 
     /*↓↓↓ else if use lqr ↓↓↓*/
-    leftLegEndTarget.x = L4 / 2;
+    leftLegEndTarget.x = L5 / 2;
     /*↑↑↑ else if use lqr end ↑↑↑*/
     rightLegEndTarget.x = leftLegEndTarget.x;
 }
 
 float calc_K1(float h) { return 0.000652 * h * h - 0.207928 * h + 1.964124; }
 float calc_K2(float h) { return 0.000045 * h * h - 0.027259 * h + 1.626482; }
-float calc_K3(float h) { return -0.000000 * h * h + 0.000000 * h + -0.000000; }
+// float calc_K3(float h) { return 0.000000 * h * h + 0.000000 * h + 0.000000; }
+float calc_K3(float h) { return 0.000026 * h * h - 0.009243 * h - 0.216330; }
 float calc_K4(float h) { return 0.000006 * h * h - 0.003406 * h - 4.027118; }
+// float calc_K1(float h) { return 0.000002 * h * h - 0.004690 * h - 14.341551; }
+// float calc_K2(float h) { return 0.000005 * h * h - 0.011210 * h - 1.224748; }
+// float calc_K3(float h) { return -0.000000 * h * h + 0.000000 * h - 0.000000; }
+// float calc_K4(float h) { return 0.000001 * h * h - 0.001270 * h - 4.384179; }
 
 // 位移计算
 float updatePositionLQR(float vel)
@@ -101,12 +106,18 @@ void wheelControlLQR()
     KRight[1] = calc_K2(rightLegEndTarget.y);
     KRight[2] = calc_K3(rightLegEndTarget.y);
     KRight[3] = calc_K4(rightLegEndTarget.y);
+    // Serial.printf("legY:%.1f\tK0:%.2f\tK1:%.2f\tK2:%.2f\tK3:%.2f\t",
+    //               rightLegEndTarget.y,
+    //               KRight[0],
+    //               KRight[1],
+    //               KRight[2],
+    //               KRight[3]);
     float currentVel = ((-motor1_vel) + (-motor2_vel)) * wheelRadius * 0.5f;
     float positionLQR = updatePositionLQR(currentVel);
-    float wheelTorTarget = -(KRight[0] * (INS.Pitch) * PI / 180 + KRight[1] * mpu6050.getGyroY() * PI / 180 + KRight[2] * positionLQR + KRight[3] * currentVel) + 0.1 * remoteLinearVel;
-    wheelTorTarget = clamp(wheelTorTarget, -5, 5);
+    float wheelTorTarget = -(KRight[0] * (INS.Pitch) * PI / 180.0f + KRight[1] * mpu6050.getGyroY() * PI / 180.0f + KRight[2] * positionLQR + KRight[3] * currentVel) - 0.3 * remoteLinearVel;
+    wheelTorTarget = clamp(wheelTorTarget, -3, 3);
     rightWheelTorTarget = wheelTorTarget + remoteSteering;
-    rightWheelTorTarget = clamp(rightWheelTorTarget, -5, 5);
+    rightWheelTorTarget = clamp(rightWheelTorTarget, -3, 3);
 
     // 左腿
     if (rightLegEndTarget.y != leftLegEndTarget.y)
@@ -115,11 +126,12 @@ void wheelControlLQR()
         KLeft[1] = calc_K2(leftLegEndTarget.y);
         KLeft[2] = calc_K3(leftLegEndTarget.y);
         KLeft[3] = calc_K4(leftLegEndTarget.y);
-        wheelTorTarget = -(KLeft[0] * (INS.Pitch) * PI / 180 + KLeft[1] * mpu6050.getGyroY() * PI / 180 + KLeft[2] * positionLQR + KLeft[3] * currentVel) + 0.1 * remoteLinearVel;
-        wheelTorTarget = clamp(wheelTorTarget, -5, 5);
+        wheelTorTarget = -(KLeft[0] * (INS.Pitch) * PI / 180.0f + KLeft[1] * mpu6050.getGyroY() * PI / 180.0f + KLeft[2] * positionLQR + KLeft[3] * currentVel) - 0.3 * remoteLinearVel;
+        wheelTorTarget = clamp(wheelTorTarget, -3, 3);
     }
     leftWheelTorTarget = wheelTorTarget - remoteSteering;
-    leftWheelTorTarget = clamp(leftWheelTorTarget, -5, 5);
+    leftWheelTorTarget = clamp(leftWheelTorTarget, -3, 3);
+    // Serial.printf("leftWheelTorTarget:%.2f\trightWheelTorTarget:%.2f\n", leftWheelTorTarget, rightWheelTorTarget);
 }
 
 /**
@@ -166,13 +178,18 @@ void jumpControl()
 void mapPPMToRobotControl()
 {
     remoteLinearVel = mapJoyStickValueCenter(PPM_RIGHT_STICK_UD, 0.01f);
-    remoteSteering = mapJoyStickValueCenter(PPM_RIGHT_STICK_LR, -0.015f); // 负号将左右符号改成符合右手系
+    remoteSteering = mapJoyStickValueCenter(PPM_RIGHT_STICK_LR, -0.0025f); // 负号将左右符号改成符合右手系
     remoteBalanceOffset = mapJoyStickValueKnob(PPM_RIGHT_KNOB, 0.01f);
     remoteShakeShoulderValue = mapJoyStickValueCenter(PPM_LEFT_STICK_LR, 1.0f / 15.0f);
     if (knobMode == PPM_KNOB_MODE::Jump)
         remoteLegHeight = legHeightMin;
     else
         remoteLegHeight = mapJoyStickValueHeight(PPM_LEFT_STICK_UD);
+    // Serial.printf("LinearVel:%.2f\tSteering:%.2f\tLegHeight:%.d\tenableHubMotor:%d\n",
+    //               remoteLinearVel,
+    //               remoteSteering,
+    //               remoteLegHeight,
+    //               enableHubMotor);
 }
 
 /**
@@ -183,7 +200,7 @@ void mapPPMToRobotControl()
 float mapJoyStickValueCenter(int inputValue, float scale)
 {
     inputValue = clamp(inputValue, 1000, 2000);
-    if (inputValue > 1400 && inputValue < 1600)
+    if (inputValue > 1450 && inputValue < 1550)
         inputValue = 1500;
     float mappedValue = (inputValue - 1500) * scale;
     return mappedValue;
@@ -216,6 +233,6 @@ int mapJoyStickValueHeight(int inputValue)
     const int valueMin = 1100;
     const int valueMax = 1900;
     inputValue = clamp(inputValue, valueMin, valueMax);
-    float ratio = (inputValue - valueMin) / (valueMax - valueMin);
+    float ratio = (float)(inputValue - valueMin) / (float)(valueMax - valueMin);
     return (int)(ratio * (legHeightMax - legHeightMin) + legHeightMin);
 }

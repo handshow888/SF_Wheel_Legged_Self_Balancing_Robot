@@ -36,6 +36,7 @@ Point forwardKinematics(float alpha, float beta)
  */
 void inverseKinematics(LegKinematicsParams &leftLeg, LegKinematicsParams &rightLeg, Point &leftTarget, Point &rightTarget)
 {
+    // Serial.printf("target x:%.1f,y:%.1f\t", leftTarget.x, leftTarget.y);
     // alpha后电机角度  beta前电机角度
     float alpha, beta;
 
@@ -53,19 +54,22 @@ void inverseKinematics(LegKinematicsParams &leftLeg, LegKinematicsParams &rightL
     alpha = 2 * atan((b + sqrt(a * a + b * b - c * c)) / (a + c));
     beta = 2 * atan((e + sqrt(d * d + e * e - f * f)) / (d + f));
     alpha = wrapTo2Pi(alpha);
-    beta = wrapTo2Pi(beta);
+    // beta = wrapTo2Pi(beta);
 
     // 如果解不在合理范围内，计算第二个解
     if (!(alpha >= PI / 4 && alpha <= (PI + PI / 6)))
     {
+        // Serial.printf("alpha1: %.2f invalid\t", alpha / PI * 180.0f);
         alpha = 2 * atan((b - sqrt(a * a + b * b - c * c)) / (a + c));
         alpha = wrapTo2Pi(alpha);
     }
     if (!(beta >= -PI / 6 && beta <= PI / 2))
     {
+        // Serial.printf("beta1: %.2f invalid\t", beta / PI * 180.0f);
         beta = 2 * atan((e - sqrt(d * d + e * e - f * f)) / (d + f));
-        beta = wrapTo2Pi(beta);
+        // beta = wrapTo2Pi(beta);
     }
+    // Serial.printf("alpha:%.2f,beta%.2f\n", alpha / PI * 180.0f, beta / PI * 180.0f);
     rightLeg.alpha = alpha;
     rightLeg.beta = beta;
 
@@ -73,7 +77,7 @@ void inverseKinematics(LegKinematicsParams &leftLeg, LegKinematicsParams &rightL
     if (leftTarget.x == rightTarget.x && leftTarget.y == rightTarget.y)
     {
         leftLeg.alpha = rightLeg.alpha;
-        leftLeg.beta = leftLeg.beta;
+        leftLeg.beta = rightLeg.beta;
     }
     else // 如果左右腿目标点不一样才需要进行左腿解算
     {
